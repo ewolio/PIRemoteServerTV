@@ -106,7 +106,7 @@ RemoteServerInteface::RemoteServerInteface(QObject *parent) : QObject(parent)
     port = 31415;
 
     connect(server, SIGNAL(newConnection()), this, SLOT(newConnection()));
-    qWarning()<<"LAN:"<<QNetworkInterface().allAddresses().at(2).toString();
+    qWarning()<<"LAN:"<<QNetworkInterface().allAddresses();
     server->listen(QHostAddress::Any, port);
 
 }
