@@ -23,6 +23,10 @@ public slots:
     void setScreenOn(QString on);
     void setScreenOn(bool on);
 
+    void addWindow(QString w);
+    void addWindow(Window* w);
+
+    void sendToWindow(QString message);
 
 protected:
     int generalVolume;
@@ -34,9 +38,11 @@ protected:
 class Window: public QObject{
     Q_OBJECT
 public:
-    Window(QString windowType, Screen* screen);
+    Window(QString windowType);
+    void registerWindow(Screen* screen, int windowID);
 
     QString getWindowType(){return _type;}
+    int getWindowID(){return windowID;}
 
     bool isFullscreen(){return _fullscreen;}
     int x1(){return _x1;}
@@ -44,22 +50,26 @@ public:
     int y1(){return _y1;}
     int y2(){return _y2;}
 
+    int getVolume(){return _volume;}
+    int getRealVolume(){return screen==NULL?_volume:_volume + screen->getVolume();}
+
+public slots:
     void setVolume(int volume);
     void updateVolume();
-    int getVolume(){return _volume;}
 
-    int getRealVolume(){return _volume + screen->getVolume();}
+    void messageReceived(QString message);
 
 protected:
     virtual void onDimensionChanged(){}
     virtual void onVolumeChanged(int previousRealVolume){}
+    virtual void onInstructionReceived(QString instruction){}
 
     Screen *screen;
 
 private:
     int _x1, _x2, _y1, _y2;
     bool _fullscreen;
-
+    int windowID;
 
     QString _type;
     int _volume, previousVolume;
@@ -68,7 +78,7 @@ private:
 class OmxPlayer: public Window{
     Q_OBJECT
 public:
-    OmxPlayer(Screen* screen);
+    OmxPlayer();
 
     bool isPlaying(){return _isPlaying;}
 public slots:
@@ -77,20 +87,34 @@ public slots:
     void play(int startTime=0);
     void togglePause();
     void stop();
+
+    void startPlayer();
+    void reloadPlayer();
+
+    void playerStopped();
+
     void volumeUp();
     void volumeDown();
-
     void forward();
     void backward();
+
+
+    void youtubeDLReadyRead();
 
 protected:
     void onVolumeChanged(int previousVolume);
     void onDimensionChanged();
+    void onInstructionReceived(QString instruction);
 
     QString _stream;
-    bool _isPlaying;
+    bool _isPlaying, _reloading;
+
+    int _startingTime;
 
     QProcess* _omxplayer;
+    QProcess* _sidePlayerSoftware;
+
+    QString _sidePlayerCmd;
 };
 
 
