@@ -11,10 +11,12 @@ class Screen: public App
     Q_OBJECT
 public:
     Screen(QObject *parent = 0);
+    ~Screen();
 
     bool isScreenOn(){return _on;}
     int getVolume(){return generalVolume;}
 signals:
+    void generalVolumeChanged();
 
 public slots:
     void setVolume(QString volume);
@@ -33,6 +35,7 @@ protected:
     bool _on;
 
     QList<Window*> windows;
+    QList<QThread*> windowsThread;
 };
 
 class Window: public QObject{
@@ -61,7 +64,7 @@ public slots:
 
 protected:
     virtual void onDimensionChanged(){}
-    virtual void onVolumeChanged(int previousRealVolume){}
+    virtual void onVolumeChanged(){}
     virtual void onInstructionReceived(QString instruction){}
 
     Screen *screen;
@@ -72,15 +75,16 @@ private:
     int windowID;
 
     QString _type;
-    int _volume, previousVolume;
+    int _volume;
 };
 
 class OmxPlayer: public Window{
     Q_OBJECT
 public:
     OmxPlayer();
+    ~OmxPlayer();
 
-    bool isPlaying(){return _isPlaying;}
+    bool isPlaying(){return _omxplayer->state()==QProcess::Running;}
 public slots:
     void setStream(QString streamName);
 
@@ -98,18 +102,14 @@ public slots:
     void forward();
     void backward();
 
-
-    void youtubeDLReadyRead();
-
 protected:
-    void onVolumeChanged(int previousVolume);
+    void onVolumeChanged();
     void onDimensionChanged();
     void onInstructionReceived(QString instruction);
 
     QString _stream;
-    bool _isPlaying, _reloading;
 
-    int _startingTime;
+    int _startingTime, previousVolume;
 
     QProcess* _omxplayer;
     QProcess* _sidePlayerSoftware;
